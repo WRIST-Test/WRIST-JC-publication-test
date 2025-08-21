@@ -1,8 +1,8 @@
-# JC publication test 1.0.0
+# JC publication test 2-build.0.0
 
 Release Notes:
 
-Publication test. 
+Publication test 2
 
 <!-- LATEST_START -->
 * _(TOC will be generated here)_
