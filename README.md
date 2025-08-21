@@ -1,6 +1,8 @@
-# WRIST-JC-publication-test 1-build.0.0
+# JC publication test 1.0.0
 
-<p>JC publication test</p>
+Release Notes:
+
+Publication test. 
 
 <!-- LATEST_START -->
 * _(TOC will be generated here)_
