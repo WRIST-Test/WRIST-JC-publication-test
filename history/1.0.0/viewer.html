@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Editor - WRIST-Test/WRIST-JC-publication-test</title>
+	<style>
+		* {
+			box-sizing: border-box;
+		}
+		html,
+		body {
+			margin: 0;
+			padding: 0;
+			overflow-x: hidden;
+		}
+		::-webkit-scrollbar {
+			display: none;
+		}
+		:root {
+			--blue-dark: rgb(30, 64, 88);
+			--grey-light: #f3f3f2;
+			--grey-mid: #8591a9;
+			--white-soft: #ffffff;
+		}
+		body,
+		input,
+		textarea,
+		label,
+		button {
+			font-family: "Segoe UI", sans-serif;
+			font-size: 14px;
+			color: var(--blue-dark);
+		}
+
+		/* Table Base */
+		table {
+			width: 100%;
+			table-layout: fixed;
+			border-collapse: collapse;
+			font-family: sans-serif;
+			font-size: 14px;
+			margin-top: 40px;
+		}
+		thead th {
+			position: sticky;
+			top: 0;
+			background: #fff;
+			z-index: 2;
+			color: rgb(54, 75, 90);
+			font-weight: bold;
+			text-align: left;
+			vertical-align: top;
+			padding: 8px;
+			border: none;
+			word-wrap: break-word;
+		}
+		tbody td {
+			border: none;
+			margin-left: 10px;
+			padding: 8px;
+			text-align: left;
+			vertical-align: top;
+			word-wrap: break-word;
+		}
+		tbody tr[data-depth="0"] {
+			background: #004466 !important;
+			color: #fff;
+		}
+		tbody tr:not([data-depth="0"]) {
+			background: rgba(66, 110, 168, 0.09);
+			color: #000;
+			border-top: 1px solid #ccc;
+		}
+		tbody tr + tr {
+			border-top: 4px solid #fff;
+		}
+		tr.clickable {
+			cursor: pointer;
+		}
+
+		/* Sticky Header Utility */
+		.sticky-header {
+			position: sticky;
+			top: 0;
+			background: #fff;
+			z-index: 2;
+		}
+
+		/* Truncate & Expand Arrows */
+		.truncate {
+			display: -webkit-box;
+			-webkit-line-clamp: 4;
+			-webkit-box-orient: vertical;
+			overflow: hidden;
+		}
+		.arrow {
+			display: inline-block;
+			width: 0.6em;
+			margin-right: 4px;
+			color: inherit;
+		}
+		tr[data-has-children="true"] .arrow::before {
+			content: "▶";
+			font-size: 0.8em;
+			transition: transform 0.2s;
+		}
+		tr.expanded .arrow::before {
+			content: "▼";
+		}
+
+		/* Row Highlighting & Deletion Animation */
+		tr.highlight-sticky {
+			background-color: #e6f7ff !important;
+			transition: background-color 0.5s ease;
+		}
+		tr.deletion-gap {
+			height: 10px;
+			background-color: #ffcccc;
+			animation: flash-fade 1s forwards;
+			transition: background-color 1s ease;
+		}
+		@keyframes flash-fade {
+			0% { background-color: #ff4d4d; }
+			100% { background-color: transparent; }
+		}
+		tr.empty-placeholder td {
+			background: #f8f8f8;
+			border-top: 2px dashed #ccc;
+		}
+
+		/* Cardinality Cell */
+		td.cardinality {
+			white-space: nowrap;
+			font-family: monospace;
+		}
+
+		/* Checkbox Column */
+		table th:nth-child(9),
+		table td:nth-child(9) {
+			width: 80px;
+			max-width: 80px;
+			padding: 8px 4px;
+			text-align: center;
+			white-space: nowrap;
+			overflow: hidden;
+		}
+		table td:nth-child(9) input[type="checkbox"] {
+			margin: 0;
+			transform: scale(0.9);
+		}
+
+		/* Actions Column (Right Sticky) */
+		table th:nth-child(10) {
+			position: sticky;
+			top: 0;
+			right: 0;
+			z-index: 4;
+			background: #fff;
+		}
+		table td:nth-child(10) {
+			position: sticky;
+			right: 0;
+			z-index: 1;
+		}
+
+		/* Fixed Width for MRO Column */
+		table th:nth-child(1),
+		table td:nth-child(1) {
+			width: 60px;
+			max-width: 60px;
+			overflow: hidden;
+			text-align: center;
+			vertical-align: middle;
+		}
+
+		/* Allow Name Column to Expand */
+		table th:nth-child(2),
+		table td:nth-child(2) {
+			width: auto;
+		}
+
+		.hidden {
+			display: none !important;
+		}
+
+		td, th {
+			word-break: break-word;
+			overflow-wrap: break-word;
+		}
+
+		/* Reduce the width of the information type column */
+		table th:nth-child(6),
+		table td:nth-child(6) ,
+		table th:nth-child(7),
+		table td:nth-child(7),
+		table th:nth-child(8),
+		table td:nth-child(8) {
+			width: 120px;
+			max-width: 120px;
+		}
+
+		table th:nth-child(9),
+		table td:nth-child(9) {
+			min-width: 140px;
+		}
+
+		thead th:nth-child(1) {
+ 			vertical-align: middle;
+			text-align: center;
+		}
+
+		/* Narrow the checkbox column properly */
+		table th:nth-child(9),
+		table td:nth-child(9) {
+			width: 80px;
+			max-width: 80px;
+			min-width: unset;
+		}
+
+		/* Widen the "Derived From" column (now column 9 in this setup) */
+		table th:nth-child(9),
+		table td:nth-child(9) {
+			width: 140px;
+			max-width: 140px;
+			white-space: normal;
+		}
+
+		table th,
+		table td {
+			word-break: break-word;
+			overflow-wrap: anywhere;
+		}
+
+		thead th {
+			position: sticky;
+			top: 0;
+			background: #fff;
+			z-index: 2;
+			color: rgb(54, 75, 90);
+			font-weight: bold;
+			text-align: left;
+			vertical-align: middle; /* ✅ align all headers vertically */
+			padding: 8px;
+			border: none;
+			word-wrap: break-word;
+			height: 100%; /* optional for consistency */
+		}
+
+
+	</style>
+</head>
+<body>
+	<div style="max-height: 95vh; overflow-x: auto; overflow-y: auto;">
+		<table>
+			<thead>
+				<tr class="sticky-header">
+					<th>MRO</th>
+					<th>Name</th>
+					<th>Description</th>
+					<th>Value Sets</th>
+					<th>Implementation Guidance</th>
+					<th>Information Type</th>
+					<th>Data Type</th>
+					<th>Cardinality</th>
+					<th>Derived From</th>
+				</tr>
+			</thead>
+			<tbody>
+				
+				
+				
+				
+				
+				<tr data-id="root-0" data-parent-id="" data-depth="0" data-has-children="false" class="">
+					<td style="padding-left: 0px;">M</td>
+					<td style="padding-left: 0px;">
+						<span class="arrow"></span>
+						<div class="truncate">Item</div>
+					</td>
+					<td><div class="truncate" title=""></div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate" title=""></div></td>
+					<td><div class="truncate">Record</div></td>
+					<td><div class="truncate"></div></td>
+					<td class="cardinality">0…1</td>
+					<td><div class="truncate"></div></td>
+				</tr>
+				
+				
+				
+				
+				<tr data-id="root-1" data-parent-id="" data-depth="0" data-has-children="true" class="">
+					<td style="padding-left: 0px;">R</td>
+					<td style="padding-left: 0px;">
+						<span class="arrow"></span>
+						<div class="truncate">About me</div>
+					</td>
+					<td><div class="truncate" title="About me"><p>About me</p></div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate" title=""><p><br></p></div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate"></div></td>
+					<td class="cardinality">0…1</td>
+					<td><div class="truncate">PRSB-Standards/WRIST-core-information-standard/About me@2-build.2.0</div></td>
+				</tr>
+				
+					
+				
+				
+				
+				<tr data-id="root-1-0" data-parent-id="root-1" data-depth="1" data-has-children="true" class="hidden">
+					<td style="padding-left: 20px;">R</td>
+					<td style="padding-left: 20px;">
+						<span class="arrow"></span>
+						<div class="truncate">What is most important to me</div>
+					</td>
+					<td><div class="truncate" title="A description of what is most important to you.">A description of what is most important to you. <br clear="none"/> 
+                </div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate" title=""></div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate"></div></td>
+					<td class="cardinality">0…1</td>
+					<td><div class="truncate">PRSB-Standards/WRIST-core-information-standard/About me/What is most important to me@2-build.2.0</div></td>
+				</tr>
+				
+					
+				
+				
+				
+				<tr data-id="root-1-0-0" data-parent-id="root-1-0" data-depth="2" data-has-children="false" class="hidden">
+					<td style="padding-left: 40px;">R</td>
+					<td style="padding-left: 40px;">
+						<span class="arrow"></span>
+						<div class="truncate">What is most important to me</div>
+					</td>
+					<td><div class="truncate" title="A description of what is most important to you Emergency Information : - Include any essential information that any professional in health and social care should know about the you in any situation, including emergencies. Other Information : - This could include : - Values, Spirituality/religion, Ethnicity, Culture, Pets, Goals and aspirations, Meaningful activities including leisure activities, visiting places, sport and exercise, listening to music, employment, education, volunteering">
+                         <span style="color: rgb(51, 51, 51); font-family: Arial, Helvetica, Geneva, sans-serif; font-size: 12px;">A description of what is most important to you <br clear="none"/>
+                        </span> 
+                         <b>Emergency Information : -</b>  Include any essential information that any professional in health and social care should know about the you in any situation, including emergencies. <br clear="none"/> 
+                         <span style="font-weight: bold;">Other Information : -</span> This could include : - Values, Spirituality/religion, Ethnicity, Culture, Pets, Goals and aspirations, Meaningful activities including leisure activities, visiting places, sport and exercise, listening to music, employment, education, volunteering</div></td>
+					<td><div class="truncate">Free text</div></td>
+					<td><div class="truncate" title=""></div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate"></div></td>
+					<td class="cardinality">0…1</td>
+					<td><div class="truncate">PRSB-Standards/WRIST-core-information-standard/About me/What is most important to me/What is most important to me@2-build.2.0</div></td>
+				</tr>
+				
+				
+				
+				
+				
+				
+				
+				<tr data-id="root-1-1" data-parent-id="root-1" data-depth="1" data-has-children="true" class="hidden">
+					<td style="padding-left: 20px;">R</td>
+					<td style="padding-left: 20px;">
+						<span class="arrow"></span>
+						<div class="truncate">People who are important to me</div>
+					</td>
+					<td><div class="truncate" title="Details of who is important to you and why.">Details of who is important to you and why. </div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate" title=""></div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate"></div></td>
+					<td class="cardinality">0…1</td>
+					<td><div class="truncate">PRSB-Standards/WRIST-core-information-standard/About me/People who are important to me@2-build.2.0</div></td>
+				</tr>
+				
+					
+				
+				
+				
+				<tr data-id="root-1-1-0" data-parent-id="root-1-1" data-depth="2" data-has-children="false" class="hidden">
+					<td style="padding-left: 40px;">R</td>
+					<td style="padding-left: 40px;">
+						<span class="arrow"></span>
+						<div class="truncate">People who are important to me</div>
+					</td>
+					<td><div class="truncate" title="Details of who is important to you and why. They could be family members, carers, friends, members of staff etc. Include how you want the people important to you to be engaged and involved in your care and support in both emergency and normal situations. Include how you stay connected to the people important to you. Who should not be contacted or consulted about your care and support and why, if you wish to say">Details of who is important to you and why. They could be family members, carers, friends, members of staff etc. Include how you want the people important to you to be engaged and involved in your care and support in both emergency and normal situations. Include how you stay connected to the people important to you. Who should not be contacted or consulted about your care and support and why, if you wish to say</div></td>
+					<td><div class="truncate">Free text </div></td>
+					<td><div class="truncate" title=""></div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate"></div></td>
+					<td class="cardinality">0…1</td>
+					<td><div class="truncate">PRSB-Standards/WRIST-core-information-standard/About me/People who are important to me/People who are important to me@2-build.2.0</div></td>
+				</tr>
+				
+				
+				
+				
+				
+				
+				
+				<tr data-id="root-1-2" data-parent-id="root-1" data-depth="1" data-has-children="true" class="hidden">
+					<td style="padding-left: 20px;">R</td>
+					<td style="padding-left: 20px;">
+						<span class="arrow"></span>
+						<div class="truncate">How I communicate and how to communicate with me</div>
+					</td>
+					<td><div class="truncate" title="A description of how you communicate normally.">A description of how you communicate normally. </div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate" title=""></div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate"></div></td>
+					<td class="cardinality">0…1</td>
+					<td><div class="truncate">PRSB-Standards/WRIST-core-information-standard/About me/How I communicate and how to communicate with me@2-build.2.0</div></td>
+				</tr>
+				
+					
+				
+				
+				
+				<tr data-id="root-1-2-0" data-parent-id="root-1-2" data-depth="2" data-has-children="false" class="hidden">
+					<td style="padding-left: 40px;">R</td>
+					<td style="padding-left: 40px;">
+						<span class="arrow"></span>
+						<div class="truncate">How I communicate and how to communicate with me</div>
+					</td>
+					<td><div class="truncate" title="A description of how you communicate normally including any communication aids you use, for example a hearing aid. Include your preferred language of communication, if your first language is not English. Include how you would communicate when you are in pain or distress. Include how you communicate choices. Include how you give feedback or raise a concern. Include how you like to receive information Describe how you would like others to engage and communicate with you, including how you would like to be addressed.">
+                         <p>A description of how you communicate normally including any communication aids you use, for example a hearing aid.</p> 
+                         <ul>
+                            <li>Include your preferred language of communication, if your first language is not English.</li>
+                            <li>Include how you would communicate when you are in pain or distress.</li>
+                            <li>Include how you communicate choices.</li>
+                            <li>Include how you give feedback or raise a concern.</li>
+                            <li>Include how you like to receive information</li>
+                        </ul> 
+                         <p>Describe how you would like others to engage and communicate with you, including how you would like to be addressed.</p> 
+                    </div></td>
+					<td><div class="truncate">Free text</div></td>
+					<td><div class="truncate" title=""></div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate"></div></td>
+					<td class="cardinality">0…1</td>
+					<td><div class="truncate">PRSB-Standards/WRIST-core-information-standard/About me/How I communicate and how to communicate with me/How I communicate and how to communicate with me@2-build.2.0</div></td>
+				</tr>
+				
+				
+				
+				
+				
+				
+				
+				<tr data-id="root-1-3" data-parent-id="root-1" data-depth="1" data-has-children="true" class="hidden">
+					<td style="padding-left: 20px;">R</td>
+					<td style="padding-left: 20px;">
+						<span class="arrow"></span>
+						<div class="truncate">My wellness</div>
+					</td>
+					<td><div class="truncate" title="A description covering what you are able to do, how you engage with others and how you feel on a typical day through to on a day when you are unwell or really unwell.">A description covering what you are able to do, how you engage with others and how you feel on a typical day through to on a day when you are unwell or really unwell.</div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate" title=""></div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate"></div></td>
+					<td class="cardinality">0…1</td>
+					<td><div class="truncate">PRSB-Standards/WRIST-core-information-standard/About me/My wellness@2-build.2.0</div></td>
+				</tr>
+				
+					
+				
+				
+				
+				<tr data-id="root-1-3-0" data-parent-id="root-1-3" data-depth="2" data-has-children="false" class="hidden">
+					<td style="padding-left: 40px;">R</td>
+					<td style="padding-left: 40px;">
+						<span class="arrow"></span>
+						<div class="truncate">My wellness</div>
+					</td>
+					<td><div class="truncate" title="A description covering what you are able to do, how you engage with others and how you feel on a typical day through to on a day when you are unwell or really unwell Include any causes that might result in you becoming unwell and strategies for avoiding or addressing the causes. For example, not drinking enough water could cause constipation. Include any signs that indicate you might be becoming unwell. On a bad day describe what is different about what you are able to do, how you engage with others and how you feel. Include how your everyday life is affected by any medical conditions e.g. dementia and any symptoms e.g. itchiness, cough, pain and how you manage those conditions. Include past health issues or experiences that need to be considered Include your wellbeing and lifestyle goals and aspirations">
+                         <div>
+                            <table class="detail spaced" width="100%" style="background-image: initial; background-position: initial; background-size: initial; background-repeat: initial; background-attachment: initial; background-origin: initial; background-clip: initial; max-width: 100%;">
+                                <tbody>
+                                    <tr>
+                                        <td colspan="3" rowspan="1" style="vertical-align: top;">
+                                            <div class="xforms-control xforms-output xforms-mediatype-text-html xforms-mediatype-text" id="xf-895≡xf-1189" style="display: inline; zoom: 1;">
+                                                <div class="xforms-output-output" id="xf-895≡xf-1189≡≡c" style="zoom: 1;">
+                                                    <p style="margin: 0px 0px 10px;">A description covering what you are able to do, how you engage with others and how you feel on a typical day through to on a day when you are unwell or really unwell</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div> 
+                         <table class="detail spaced" width="100%" style="background-image: initial; background-position: initial; background-size: initial; background-repeat: initial; background-attachment: initial; background-origin: initial; background-clip: initial; font-family: Arial, Helvetica, Geneva, sans-serif; font-size: 12px; max-width: 100%; color: rgb(51, 51, 51);">
+                            <tbody>
+                                <tr>
+                                    <td colspan="3" rowspan="1" style="vertical-align: top;">
+                                        <div class="xforms-control xforms-output xforms-mediatype-text-html xforms-mediatype-text" id="xf-895≡xf-1189" style="display: inline; zoom: 1;">
+                                            <div class="xforms-output-output" id="xf-895≡xf-1189≡≡c" style="zoom: 1;">
+                                                <p style="margin: 0px 0px 10px;">
+                                                    <ul>
+                                                        <li>Include any causes that might result in you becoming unwell and strategies for avoiding or addressing the causes. For example, not drinking enough water could cause constipation.</li>
+                                                        <li>Include any signs that indicate you might be becoming unwell.</li>
+                                                        <li>On a bad day describe what is different about what you are able to do, how you engage with others and how you feel.</li>
+                                                        <li>Include how your everyday life is affected by any medical conditions e.g. dementia and any symptoms e.g. itchiness, cough, pain and how you manage those conditions.</li>
+                                                        <li>Include past health issues or experiences that need to be considered</li>
+                                                        <li>Include your wellbeing and lifestyle goals and aspirations</li>
+                                                    </ul>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table> 
+                         <ul/> 
+                    </div></td>
+					<td><div class="truncate">Free text</div></td>
+					<td><div class="truncate" title=""></div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate"></div></td>
+					<td class="cardinality">0…1</td>
+					<td><div class="truncate">PRSB-Standards/WRIST-core-information-standard/About me/My wellness/My wellness@2-build.2.0</div></td>
+				</tr>
+				
+				
+				
+				
+				
+				
+				
+				<tr data-id="root-1-4" data-parent-id="root-1" data-depth="1" data-has-children="true" class="hidden">
+					<td style="padding-left: 20px;">R</td>
+					<td style="padding-left: 20px;">
+						<span class="arrow"></span>
+						<div class="truncate">Please do and please don&#39;t</div>
+					</td>
+					<td><div class="truncate" title="A description of things you want someone supporting you to do (or not to do).">A description of things you want someone supporting you to do (or not to do). </div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate" title=""></div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate"></div></td>
+					<td class="cardinality">0…1</td>
+					<td><div class="truncate">PRSB-Standards/WRIST-core-information-standard/About me/Please do and please don&#39;t@2-build.2.0</div></td>
+				</tr>
+				
+					
+				
+				
+				
+				<tr data-id="root-1-4-0" data-parent-id="root-1-4" data-depth="2" data-has-children="false" class="hidden">
+					<td style="padding-left: 40px;">R</td>
+					<td style="padding-left: 40px;">
+						<span class="arrow"></span>
+						<div class="truncate">Please do and please don&#39;t</div>
+					</td>
+					<td><div class="truncate" title="A description of things you want someone supporting you to do (or not to do). Things you want someone to do might include (for example): - Talk to me not to my carer, remind me to take my medication, encourage me to wash my hands regularly, explain to me what is happening and why, respond to my communication. A description of things you do not want someone supporting you to do might include (for example): - Discussing or asking questions about certain topics, making assumptions about something, providing support when it is not wanted, talking to you in a certain way, undergoing a specific intervention or taking a medication the person does not want.">A description of things you want someone supporting you to do (or not to do). <br clear="none"/> Things you want someone to  <b>do </b> might include (for example): - Talk to me not to my carer, remind me to take my medication, encourage me to wash my hands regularly, explain to me what is happening and why, respond to my communication. <br clear="none"/> A description of things you  <b>do not</b>  want someone supporting you to do might include (for example): - Discussing or asking questions about certain topics, making assumptions about something, providing support when it is not wanted, talking to you in a certain way, undergoing a specific intervention or taking a medication the person does not want.</div></td>
+					<td><div class="truncate">Free text</div></td>
+					<td><div class="truncate" title=""></div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate"></div></td>
+					<td class="cardinality">0…1</td>
+					<td><div class="truncate">PRSB-Standards/WRIST-core-information-standard/About me/Please do and please don&#39;t/Please do and please don&#39;t@2-build.2.0</div></td>
+				</tr>
+				
+				
+				
+				
+				
+				
+				
+				<tr data-id="root-1-5" data-parent-id="root-1" data-depth="1" data-has-children="true" class="hidden">
+					<td style="padding-left: 20px;">R</td>
+					<td style="padding-left: 20px;">
+						<span class="arrow"></span>
+						<div class="truncate">How and when to support me</div>
+					</td>
+					<td><div class="truncate" title="A description of how and when you want someone caring for you to support you.">A description of how and when you want someone caring for you to support you.</div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate" title=""></div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate"></div></td>
+					<td class="cardinality">0…1</td>
+					<td><div class="truncate">PRSB-Standards/WRIST-core-information-standard/About me/How and when to support me@2-build.2.0</div></td>
+				</tr>
+				
+					
+				
+				
+				
+				<tr data-id="root-1-5-0" data-parent-id="root-1-5" data-depth="2" data-has-children="false" class="hidden">
+					<td style="padding-left: 40px;">R</td>
+					<td style="padding-left: 40px;">
+						<span class="arrow"></span>
+						<div class="truncate">How and when to support me</div>
+					</td>
+					<td><div class="truncate" title="A description of how and when you want someone caring for you to support you. This could include support needs in an emergency situation (for example taking blood) This could include support you need to maintain important routines or to carry out particular activities, for example: - Personal care routines, Eating and drinking, Bedtime routines, Taking medications, Moving and transitioning This could also include support needed with:- wearing glasses/hearing aids/false teeth etc, making informed choices or understanding dangers and risks, managing your emotions, moods and behaviours, memory or confusion. Include how your support needs change in different environments. Include any triggers that might result in you needing further support and strategies for avoiding or addressing the triggers. Include how you want the support to be provided.">
+                         <p>A description of how and when you want someone caring for you to support you.</p> 
+                         <p>
+                            <ul>
+                                <li>This could include support needs in an emergency situation (for example taking blood)</li>
+                                <li>This could include support you need to maintain important routines or to carry out particular activities, for example: - Personal care routines, Eating and drinking, Bedtime routines, Taking medications, Moving and transitioning</li>
+                                <li>This could also include support needed with:- wearing glasses/hearing aids/false teeth etc, making informed choices or understanding dangers and risks, managing your emotions, moods and behaviours, memory or confusion.</li>
+                                <li>Include how your support needs change in different environments. Include any triggers that might result in you needing further support and strategies for avoiding or addressing the triggers. Include how you want the support to be provided.</li>
+                            </ul>
+                        </p> 
+                         <p/> 
+                    </div></td>
+					<td><div class="truncate">Free text</div></td>
+					<td><div class="truncate" title=""></div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate"></div></td>
+					<td class="cardinality">0…1</td>
+					<td><div class="truncate">PRSB-Standards/WRIST-core-information-standard/About me/How and when to support me/How and when to support me@2-build.2.0</div></td>
+				</tr>
+				
+				
+				
+				
+				
+				
+				
+				<tr data-id="root-1-6" data-parent-id="root-1" data-depth="1" data-has-children="true" class="hidden">
+					<td style="padding-left: 20px;">R</td>
+					<td style="padding-left: 20px;">
+						<span class="arrow"></span>
+						<div class="truncate">Also worth knowing about me</div>
+					</td>
+					<td><div class="truncate" title="A description of what is also worth knowing about you for people caring or supporting you.">A description of what is also worth knowing about you for people caring or supporting you. </div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate" title=""></div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate"></div></td>
+					<td class="cardinality">0…1</td>
+					<td><div class="truncate">PRSB-Standards/WRIST-core-information-standard/About me/Also worth knowing about me@2-build.2.0</div></td>
+				</tr>
+				
+					
+				
+				
+				
+				<tr data-id="root-1-6-0" data-parent-id="root-1-6" data-depth="2" data-has-children="false" class="hidden">
+					<td style="padding-left: 40px;">R</td>
+					<td style="padding-left: 40px;">
+						<span class="arrow"></span>
+						<div class="truncate">Also worth knowing about me</div>
+					</td>
+					<td><div class="truncate" title="A description of what is also worth knowing about you for people caring or supporting you. This could include a short history of your life (where you have worked, where you lived, important events in your life, important people in your past life). This could include a short profile of your current life:- your work / study, your aspirations, your skills, your networks, things you like e.g. particular foods, places, a football team and things you like to talk about, things you dislike This could also include any care and support preferences that have not been included elsewhere.">
+                         <p>A description of what is also worth knowing about you for people caring or supporting you.</p> 
+                         <p>
+                            <ul>
+                                <li>This could include a short history of your life (where you have worked, where you lived, important events in your life, important people in your past life).</li>
+                                <li>This could include a short profile of your current life:- your work / study, your aspirations, your skills, your networks, things you like e.g. particular foods, places, a football team and things you like to talk about, things you dislike</li>
+                                <li>This could also include any care and support preferences that have not been included elsewhere.</li>
+                            </ul>
+                        </p> 
+                    </div></td>
+					<td><div class="truncate">Free text</div></td>
+					<td><div class="truncate" title=""></div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate"></div></td>
+					<td class="cardinality">0…1</td>
+					<td><div class="truncate">PRSB-Standards/WRIST-core-information-standard/About me/Also worth knowing about me/Also worth knowing about me@2-build.2.0</div></td>
+				</tr>
+				
+				
+				
+				
+				
+				
+				
+				<tr data-id="root-1-7" data-parent-id="root-1" data-depth="1" data-has-children="false" class="hidden">
+					<td style="padding-left: 20px;">R</td>
+					<td style="padding-left: 20px;">
+						<span class="arrow"></span>
+						<div class="truncate">Date</div>
+					</td>
+					<td><div class="truncate" title="This is a record of the date that this information was last updated.">This is a record of the date that this information was last updated.</div></td>
+					<td><div class="truncate">Date and Time</div></td>
+					<td><div class="truncate" title=""></div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate"></div></td>
+					<td class="cardinality">0…1</td>
+					<td><div class="truncate">PRSB-Standards/WRIST-core-information-standard/About me/Date@2-build.2.0</div></td>
+				</tr>
+				
+				
+				
+				
+				<tr data-id="root-1-8" data-parent-id="root-1" data-depth="1" data-has-children="false" class="hidden">
+					<td style="padding-left: 20px;">R</td>
+					<td style="padding-left: 20px;">
+						<span class="arrow"></span>
+						<div class="truncate">Supported to write this by</div>
+					</td>
+					<td><div class="truncate" title="Where relevant, this is a record of name, relationship/role and contact details of the individual who supported the person to write this section e.g. carer, family member, advocate, professional.">Where relevant, this is a record of name, relationship/role and contact details of the individual who supported the person to write this section e.g. carer, family member, advocate, professional.</div></td>
+					<td><div class="truncate">Free text</div></td>
+					<td><div class="truncate" title=""></div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate"></div></td>
+					<td class="cardinality">0…1</td>
+					<td><div class="truncate">PRSB-Standards/WRIST-core-information-standard/About me/Supported to write this by@2-build.2.0</div></td>
+				</tr>
+				
+				
+				
+				
+				<tr data-id="root-1-9" data-parent-id="root-1" data-depth="1" data-has-children="false" class="hidden">
+					<td style="padding-left: 20px;">R</td>
+					<td style="padding-left: 20px;">
+						<span class="arrow"></span>
+						<div class="truncate">Location to multimedia file</div>
+					</td>
+					<td><div class="truncate" title="The link to the person&#39;s multimedia file">The link to the person's multimedia file</div></td>
+					<td><div class="truncate">Link to URL</div></td>
+					<td><div class="truncate" title=""></div></td>
+					<td><div class="truncate"></div></td>
+					<td><div class="truncate"></div></td>
+					<td class="cardinality">0…1</td>
+					<td><div class="truncate">PRSB-Standards/WRIST-core-information-standard/About me/Location to multimedia file@2-build.2.0</div></td>
+				</tr>
+				
+				
+				
+				
+				
+				
+			</tbody>
+		</table>
+	</div>
+
+	<script>
+		const data = {"component_sets": [{"id": "2-build.2.0", "name": "PRSB-Standards/WRIST-core-information-standard"}, {"id": "1-build.0.1", "name": "PRSB-Standards/WRIST-IPS-Datatypes"}, {"id": "1-build.0.1", "name": "PRSB-Standards/WRIST-PRSB-Datatypes"}], "concept": [{"description": "", "implementationGuidance": "", "informationType": "Record", "maximumMultiplicity": "1", "minimumMultiplicity": "0", "mro": "M", "name": "Item", "type": "item", "valueSets": ""}, {"concept": [{"concept": [{"derivedFrom": "PRSB-Standards/WRIST-core-information-standard/About me/What is most important to me/What is most important to me@2-build.2.0", "description": "\n                         \u003cspan style=\"color: rgb(51, 51, 51); font-family: Arial, Helvetica, Geneva, sans-serif; font-size: 12px;\"\u003eA description of what is most important to you\u00a0\u003cbr clear=\"none\"/\u003e\n                        \u003c/span\u003e \n                         \u003cb\u003eEmergency Information : -\u003c/b\u003e \u00a0Include any essential information that any professional in health and social care should know about the you in any situation, including emergencies. \u003cbr clear=\"none\"/\u003e \n                         \u003cspan style=\"font-weight: bold;\"\u003eOther Information : -\u003c/span\u003e This could include : - Values, Spirituality/religion, Ethnicity, Culture, Pets, Goals and aspirations, Meaningful activities including leisure activities, visiting places, sport and exercise, listening to music, employment, education, volunteering", "maximumMultiplicity": "1", "minimumMultiplicity": "0", "mro": "R", "name": "What is most important to me", "type": "item", "valueDomain": [{"type": "text"}], "valueSets": "Free text"}], "derivedFrom": "PRSB-Standards/WRIST-core-information-standard/About me/What is most important to me@2-build.2.0", "description": "A description of what is most important to you. \u003cbr clear=\"none\"/\u003e \n                ", "maximumMultiplicity": "1", "minimumMultiplicity": "0", "mro": "R", "name": "What is most important to me", "type": "group"}, {"concept": [{"derivedFrom": "PRSB-Standards/WRIST-core-information-standard/About me/People who are important to me/People who are important to me@2-build.2.0", "description": "Details of who is important to you and why. They could be family members, carers, friends, members of staff etc. Include how you want the people important to you to be engaged and involved in your care and support in both emergency and normal situations. Include how you stay connected to the people important to you. Who should not be contacted or consulted about your care and support and why, if you wish to say", "maximumMultiplicity": "1", "minimumMultiplicity": "0", "mro": "R", "name": "People who are important to me", "type": "item", "valueDomain": [{"type": "text"}], "valueSets": "Free text\u00a0"}], "derivedFrom": "PRSB-Standards/WRIST-core-information-standard/About me/People who are important to me@2-build.2.0", "description": "Details of who is important to you and why.\u00a0", "maximumMultiplicity": "1", "minimumMultiplicity": "0", "mro": "R", "name": "People who are important to me", "type": "group"}, {"concept": [{"derivedFrom": "PRSB-Standards/WRIST-core-information-standard/About me/How I communicate and how to communicate with me/How I communicate and how to communicate with me@2-build.2.0", "description": "\n                         \u003cp\u003eA description of how you communicate normally including any communication aids you use, for example a hearing aid.\u003c/p\u003e \n                         \u003cul\u003e\n                            \u003cli\u003eInclude your preferred language of communication, if your first language is not English.\u003c/li\u003e\n                            \u003cli\u003eInclude how you would communicate when you are in pain or distress.\u003c/li\u003e\n                            \u003cli\u003eInclude how you communicate choices.\u003c/li\u003e\n                            \u003cli\u003eInclude how you give feedback or raise a concern.\u003c/li\u003e\n                            \u003cli\u003eInclude how you like to receive information\u003c/li\u003e\n                        \u003c/ul\u003e \n                         \u003cp\u003eDescribe how you would like others to engage and communicate with you, including how you would like to be addressed.\u003c/p\u003e \n                    ", "maximumMultiplicity": "1", "minimumMultiplicity": "0", "mro": "R", "name": "How I communicate and how to communicate with me", "type": "item", "valueDomain": [{"type": "text"}], "valueSets": "Free text"}], "derivedFrom": "PRSB-Standards/WRIST-core-information-standard/About me/How I communicate and how to communicate with me@2-build.2.0", "description": "A description of how you communicate normally.\u00a0", "maximumMultiplicity": "1", "minimumMultiplicity": "0", "mro": "R", "name": "How I communicate and how to communicate with me", "type": "group"}, {"concept": [{"derivedFrom": "PRSB-Standards/WRIST-core-information-standard/About me/My wellness/My wellness@2-build.2.0", "description": "\n                         \u003cdiv\u003e\n                            \u003ctable class=\"detail spaced\" width=\"100%\" style=\"background-image: initial; background-position: initial; background-size: initial; background-repeat: initial; background-attachment: initial; background-origin: initial; background-clip: initial; max-width: 100%;\"\u003e\n                                \u003ctbody\u003e\n                                    \u003ctr\u003e\n                                        \u003ctd colspan=\"3\" rowspan=\"1\" style=\"vertical-align: top;\"\u003e\n                                            \u003cdiv class=\"xforms-control xforms-output xforms-mediatype-text-html xforms-mediatype-text\" id=\"xf-895\u2261xf-1189\" style=\"display: inline; zoom: 1;\"\u003e\n                                                \u003cdiv class=\"xforms-output-output\" id=\"xf-895\u2261xf-1189\u2261\u2261c\" style=\"zoom: 1;\"\u003e\n                                                    \u003cp style=\"margin: 0px 0px 10px;\"\u003eA description covering what you are able to do, how you engage with others and how you feel on a typical day through to on a day when you are unwell or really unwell\u003c/p\u003e\n                                                \u003c/div\u003e\n                                            \u003c/div\u003e\n                                        \u003c/td\u003e\n                                    \u003c/tr\u003e\n                                \u003c/tbody\u003e\n                            \u003c/table\u003e\n                        \u003c/div\u003e \n                         \u003ctable class=\"detail spaced\" width=\"100%\" style=\"background-image: initial; background-position: initial; background-size: initial; background-repeat: initial; background-attachment: initial; background-origin: initial; background-clip: initial; font-family: Arial, Helvetica, Geneva, sans-serif; font-size: 12px; max-width: 100%; color: rgb(51, 51, 51);\"\u003e\n                            \u003ctbody\u003e\n                                \u003ctr\u003e\n                                    \u003ctd colspan=\"3\" rowspan=\"1\" style=\"vertical-align: top;\"\u003e\n                                        \u003cdiv class=\"xforms-control xforms-output xforms-mediatype-text-html xforms-mediatype-text\" id=\"xf-895\u2261xf-1189\" style=\"display: inline; zoom: 1;\"\u003e\n                                            \u003cdiv class=\"xforms-output-output\" id=\"xf-895\u2261xf-1189\u2261\u2261c\" style=\"zoom: 1;\"\u003e\n                                                \u003cp style=\"margin: 0px 0px 10px;\"\u003e\n                                                    \u003cul\u003e\n                                                        \u003cli\u003eInclude any causes that might result in you becoming unwell and strategies for avoiding or addressing the causes. For example, not drinking enough water could cause constipation.\u003c/li\u003e\n                                                        \u003cli\u003eInclude any signs that indicate you might be becoming unwell.\u003c/li\u003e\n                                                        \u003cli\u003eOn a bad day describe what is different about what you are able to do, how you engage with others and how you feel.\u003c/li\u003e\n                                                        \u003cli\u003eInclude how your everyday life is affected by any medical conditions e.g. dementia and any symptoms e.g. itchiness, cough, pain and how you manage those conditions.\u003c/li\u003e\n                                                        \u003cli\u003eInclude past health issues or experiences that need to be considered\u003c/li\u003e\n                                                        \u003cli\u003eInclude your wellbeing and lifestyle goals and aspirations\u003c/li\u003e\n                                                    \u003c/ul\u003e\n                                                \u003c/p\u003e\n                                            \u003c/div\u003e\n                                        \u003c/div\u003e\n                                    \u003c/td\u003e\n                                \u003c/tr\u003e\n                            \u003c/tbody\u003e\n                        \u003c/table\u003e \n                         \u003cul/\u003e \n                    ", "maximumMultiplicity": "1", "minimumMultiplicity": "0", "mro": "R", "name": "My wellness", "type": "item", "valueDomain": [{"type": "text"}], "valueSets": "Free text"}], "derivedFrom": "PRSB-Standards/WRIST-core-information-standard/About me/My wellness@2-build.2.0", "description": "A description covering what you are able to do, how you engage with others and how you feel on a typical day through to on a day when you are unwell or really unwell.", "maximumMultiplicity": "1", "minimumMultiplicity": "0", "mro": "R", "name": "My wellness", "type": "group"}, {"concept": [{"derivedFrom": "PRSB-Standards/WRIST-core-information-standard/About me/Please do and please don\u0027t/Please do and please don\u0027t@2-build.2.0", "description": "A description of things you want someone supporting you to do (or not to do). \u003cbr clear=\"none\"/\u003e Things you want someone to\u00a0 \u003cb\u003edo\u00a0\u003c/b\u003e might include (for example): - Talk to me not to my carer, remind me to take my medication, encourage me to wash my hands regularly, explain to me what is happening and why, respond to my communication. \u003cbr clear=\"none\"/\u003e A description of things you\u00a0 \u003cb\u003edo not\u003c/b\u003e \u00a0want someone supporting you to do might include (for example): - Discussing or asking questions about certain topics, making assumptions about something, providing support when it is not wanted, talking to you in a certain way, undergoing a specific intervention or taking a medication the person does not want.", "maximumMultiplicity": "1", "minimumMultiplicity": "0", "mro": "R", "name": "Please do and please don\u0027t", "type": "item", "valueDomain": [{"type": "text"}], "valueSets": "Free text"}], "derivedFrom": "PRSB-Standards/WRIST-core-information-standard/About me/Please do and please don\u0027t@2-build.2.0", "description": "A description of things you want someone supporting you to do (or not to do).\u00a0", "maximumMultiplicity": "1", "minimumMultiplicity": "0", "mro": "R", "name": "Please do and please don\u0027t", "type": "group"}, {"concept": [{"derivedFrom": "PRSB-Standards/WRIST-core-information-standard/About me/How and when to support me/How and when to support me@2-build.2.0", "description": "\n                         \u003cp\u003eA description of how and when you want someone caring for you to support you.\u003c/p\u003e \n                         \u003cp\u003e\n                            \u003cul\u003e\n                                \u003cli\u003eThis could include support needs in an emergency situation (for example taking blood)\u003c/li\u003e\n                                \u003cli\u003eThis could include support you need to maintain important routines or to carry out particular activities, for example: - Personal care routines, Eating and drinking, Bedtime routines, Taking medications, Moving and transitioning\u003c/li\u003e\n                                \u003cli\u003eThis could also include support needed with:- wearing glasses/hearing aids/false teeth etc, making informed choices or understanding dangers and risks, managing your emotions, moods and behaviours, memory or confusion.\u003c/li\u003e\n                                \u003cli\u003eInclude how your support needs change in different environments. Include any triggers that might result in you needing further support and strategies for avoiding or addressing the triggers. Include how you want the support to be provided.\u003c/li\u003e\n                            \u003c/ul\u003e\n                        \u003c/p\u003e \n                         \u003cp/\u003e \n                    ", "maximumMultiplicity": "1", "minimumMultiplicity": "0", "mro": "R", "name": "How and when to support me", "type": "item", "valueDomain": [{"type": "text"}], "valueSets": "Free text"}], "derivedFrom": "PRSB-Standards/WRIST-core-information-standard/About me/How and when to support me@2-build.2.0", "description": "A description of how and when you want someone caring for you to support you.", "maximumMultiplicity": "1", "minimumMultiplicity": "0", "mro": "R", "name": "How and when to support me", "type": "group"}, {"concept": [{"derivedFrom": "PRSB-Standards/WRIST-core-information-standard/About me/Also worth knowing about me/Also worth knowing about me@2-build.2.0", "description": "\n                         \u003cp\u003eA description of what is also worth knowing about you for people caring or supporting you.\u003c/p\u003e \n                         \u003cp\u003e\n                            \u003cul\u003e\n                                \u003cli\u003eThis could include a short history of your life (where you have worked, where you lived, important events in your life, important people in your past life).\u003c/li\u003e\n                                \u003cli\u003eThis could include a short profile of your current life:- your work / study, your aspirations, your skills, your networks, things you like e.g. particular foods, places, a football team and things you like to talk about, things you dislike\u003c/li\u003e\n                                \u003cli\u003eThis could also include any care and support preferences that have not been included elsewhere.\u003c/li\u003e\n                            \u003c/ul\u003e\n                        \u003c/p\u003e \n                    ", "maximumMultiplicity": "1", "minimumMultiplicity": "0", "mro": "R", "name": "Also worth knowing about me", "type": "item", "valueDomain": [{"type": "text"}], "valueSets": "Free text"}], "derivedFrom": "PRSB-Standards/WRIST-core-information-standard/About me/Also worth knowing about me@2-build.2.0", "description": "A description of what is also worth knowing about you for people caring or supporting you.\u00a0", "maximumMultiplicity": "1", "minimumMultiplicity": "0", "mro": "R", "name": "Also worth knowing about me", "type": "group"}, {"derivedFrom": "PRSB-Standards/WRIST-core-information-standard/About me/Date@2-build.2.0", "description": "This is a record of the date that this information was last updated.", "maximumMultiplicity": "1", "minimumMultiplicity": "0", "mro": "R", "name": "Date", "type": "item", "valueDomain": [{"property": [{"timeStampPrecision": "YMDHM"}], "type": "datetime"}], "valueSets": "Date and Time"}, {"derivedFrom": "PRSB-Standards/WRIST-core-information-standard/About me/Supported to write this by@2-build.2.0", "description": "Where relevant, this is a record of name, relationship/role and contact details of the individual who supported the person to write this section e.g. carer, family member, advocate, professional.", "maximumMultiplicity": "1", "minimumMultiplicity": "0", "mro": "R", "name": "Supported to write this by", "type": "item", "valueDomain": [{"property": [{"maxLength": "150"}], "type": "text"}], "valueSets": "Free text"}, {"derivedFrom": "PRSB-Standards/WRIST-core-information-standard/About me/Location to multimedia file@2-build.2.0", "description": "The link to the person\u0027s multimedia file", "maximumMultiplicity": "1", "minimumMultiplicity": "0", "mro": "R", "name": "Location to multimedia file", "type": "item", "valueDomain": [{"type": "text"}], "valueSets": "Link to URL"}], "derivedFrom": "PRSB-Standards/WRIST-core-information-standard/About me@2-build.2.0", "description": "\u003cp\u003eAbout me\u003c/p\u003e", "implementationGuidance": "\u003cp\u003e\u003cbr\u003e\u003c/p\u003e", "informationType": "", "isComponent": true, "maximumMultiplicity": "1", "minimumMultiplicity": "0", "mro": "R", "name": "About me", "relationshipType": "neither", "type": "group", "valueDomain": [{"type": ""}], "valueSets": ""}], "description": "\u003cp\u003eJC publication test\u003c/p\u003e", "name": "JC publication test", "version": "1-build.0.0"};
+		document.addEventListener('DOMContentLoaded', () => {
+		const rows = Array.from(document.querySelectorAll('tr[data-id]'));
+
+		function toggleRows(pid, show) {
+			rows.forEach(r => {
+				if (r.getAttribute('data-parent-id') === pid) {
+					r.classList.toggle('hidden', !show);
+					if (!show) {
+						r.classList.remove('expanded');
+						toggleRows(r.getAttribute('data-id'), false);
+					}
+				}
+			});
+		}
+
+		rows.filter(r => r.getAttribute('data-has-children') === 'true').forEach(r => {
+			r.classList.add('clickable');
+			r.addEventListener('click', e => {
+				const clickedCell = e.target.closest('td');
+				if (!clickedCell) return; // ❗️ updated this line
+
+				const id = r.getAttribute('data-id');
+				const expanded = r.classList.toggle('expanded');
+				toggleRows(id, expanded);
+			});
+		});
+	});
+
+	</script>
+</body>
+</html>
