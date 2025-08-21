@@ -1,5 +1,5 @@
 {
-  "version": "2-build.0.0",
+  "version": "2.0.0",
   "name": "JC publication test",
   "description": "<p>JC publication test</p>",
   "component_sets": [
@@ -1201,6 +1201,25 @@
       "name": "Person demographics",
       "relationshipType": "neither",
       "type": "group",
+      "valueDomain": [
+        {
+          "type": ""
+        }
+      ],
+      "valueSets": ""
+    },
+    {
+      "derivedFrom": "PRSB-Standards/WRIST-IPS-Datatypes/List Concept@1-build.0.1",
+      "description": "<p><br></p>",
+      "implementationGuidance": "<p><br></p>",
+      "informationType": "",
+      "isComponent": true,
+      "maximumMultiplicity": "",
+      "minimumMultiplicity": "",
+      "mro": "",
+      "name": "List Concept",
+      "relationshipType": "neither",
+      "type": "",
       "valueDomain": [
         {
           "type": ""
