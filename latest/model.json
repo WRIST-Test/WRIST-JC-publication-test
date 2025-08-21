@@ -1,5 +1,5 @@
 {
-  "version": "2.0.0",
+  "version": "3-build.0.0",
   "name": "JC publication test",
   "description": "<p>JC publication test</p>",
   "component_sets": [
@@ -1218,6 +1218,26 @@
       "minimumMultiplicity": "",
       "mro": "",
       "name": "List Concept",
+      "relationshipType": "neither",
+      "type": "",
+      "valueDomain": [
+        {
+          "type": ""
+        }
+      ],
+      "valueSets": ""
+    },
+    {
+      "concept": [],
+      "derivedFrom": "PRSB-Standards/WRIST-IPS-Datatypes/Range@1-build.0.1",
+      "description": "<p><br></p>",
+      "implementationGuidance": "<p><br></p>",
+      "informationType": "",
+      "isComponent": true,
+      "maximumMultiplicity": "",
+      "minimumMultiplicity": "",
+      "mro": "",
+      "name": "Range",
       "relationshipType": "neither",
       "type": "",
       "valueDomain": [
